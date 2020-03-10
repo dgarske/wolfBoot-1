@@ -12,6 +12,8 @@ An application that requires interactions with wolfBoot must include the header 
 This exports the API function declarations, and the predefined values for the flags
 and tags stored together with the firmware images in the two partitions.
 
+The application only needs to compile the `src/libwolfboot.c`. If using external flash also `hal/[PLATFORM].c`.
+
 For more information about flash partitions, flags and states see [Flash partitions](flash_partitions.md).
 
 ## API

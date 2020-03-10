@@ -96,3 +96,5 @@ config/*.ld
 # IAR files not under version control
 IDE/IAR/settings
 IDE/IAR/*.ewt
+
+wolfbootapp

@@ -1065,7 +1065,8 @@ void hal_init(void)
 #endif /* DEBUG_ZYNQ */
 
     /* This is only allowed for EL-3 */
-    //asm volatile("msr cntfrq_el0, %0" : : "r" (cpu_freq) : "memory");
+    /* Example code for getting CPU frequency, not required */
+    /* asm volatile("msr cntfrq_el0, %0" : : "r" (cpu_freq) : "memory"); */
 
     zynq_init(cpu_freq);
 }

@@ -796,3 +796,13 @@ int ext_flash_decrypt_read(uintptr_t address, uint8_t *data, int len)
 
 #endif /* EXT_ENCRYPTED */
 
+#ifdef WOLFBOOT_APP
+#include <stdio.h>
+int main(int argc, char** argv)
+{
+    printf("wolfBoot API Tester\n");
+
+    wolfBoot_success();
+    return 0;
+}
+#endif /* WOLFBOOT_APP */
