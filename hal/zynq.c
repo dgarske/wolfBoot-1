@@ -431,7 +431,8 @@ static int qspi_transfer(QspiDev_t* pDev,
 
     /* RX */
     if (rxData) {
-        /* If RX pointer is not 32 byte aligned then use temp page data buffer */
+        /* Driver uses DMA for RX only and must be 32-byte aligned pointer */
+        /* If RX pointer is not aligned then use temp page data buffer */
         if (((size_t)rxPtr % 32) != 0)
             rxPtr = pageData;
         if (rxSz > (uint32_t)sizeof(pageData))
@@ -1095,8 +1096,22 @@ int RAMFUNCTION hal_flash_erase(uint32_t address, int len)
     return 0;
 }
 
-/* Xilinx Write uses SPI mode and Page Program 0x02 */
-/* Issues using write with QSPI mode */
+
+#if GQSPI_QSPI_MODE == GQSPI_GEN_FIFO_MODE_QSPI && GQPI_USE_4BYTE_ADDR == 1
+#define FLASH_WRITE_CMD QUAD_PROG_4B_CMD
+#elif GQSPI_QSPI_MODE == GQSPI_GEN_FIFO_MODE_DSPI && GQPI_USE_4BYTE_ADDR == 1
+#define FLASH_WRITE_CMD DUAL_PROG_4B_CMD
+#elif GQPI_USE_4BYTE_ADDR == 1
+#define FLASH_WRITE_CMD PAGE_PROG_4B_CMD
+#elif GQSPI_QSPI_MODE == GQSPI_GEN_FIFO_MODE_QSPI
+#define FLASH_WRITE_CMD QUAD_PROG_CMD
+#elif GQSPI_QSPI_MODE == GQSPI_GEN_FIFO_MODE_DSPI
+#define FLASH_WRITE_CMD DUAL_PROG_CMD
+#else
+#define FLASH_WRITE_CMD PAGE_PROG_CMD
+#endif
+
+
 int RAMFUNCTION ext_flash_write(uintptr_t address, const uint8_t *data, int len)
 {
     int ret = 0;
@@ -1121,7 +1136,7 @@ int RAMFUNCTION ext_flash_write(uintptr_t address, const uint8_t *data, int len)
 
             /* ------ Write Flash (page at a time) ------ */
             memset(cmd, 0, sizeof(cmd));
-            cmd[idx++] = PAGE_PROG_CMD;
+            cmd[idx++] = FLASH_WRITE_CMD;
         #if GQPI_USE_4BYTE_ADDR == 1
             cmd[idx++] = ((addr >> 24) & 0xFF);
         #endif
@@ -1130,7 +1145,7 @@ int RAMFUNCTION ext_flash_write(uintptr_t address, const uint8_t *data, int len)
             cmd[idx++] = ((addr >> 0)  & 0xFF);
             ret = qspi_transfer(&mDev, cmd, idx,
                 (const uint8_t*)(data + (page * FLASH_PAGE_SIZE)),
-                xferSz, NULL, 0, 0, GQSPI_GEN_FIFO_MODE_SPI);
+                xferSz, NULL, 0, 0, mDev.mode);
             wolfBoot_printf("Flash Page %d Write: Ret %d\n", page, ret);
             if (ret != GQSPI_CODE_SUCCESS)
                 break;
