@@ -133,6 +133,20 @@ ifeq ($(ARCH),ARM)
     else
       WOLFBOOT_ORIGIN=0x08000000
     endif
+
+    ifneq ($(PKA),0)
+      PKA_EXTRA_OBJS+= \
+          $(STM32CUBE)/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pka.o \
+          ./lib/wolfssl/wolfcrypt/src/port/st/stm32.o
+      PKA_EXTRA_CFLAGS+=-DWOLFSSL_STM32_PKA -DWOLFSSL_STM32U5 \
+          -Isrc \
+          -I$(STM32CUBE)/Drivers/STM32U5xx_HAL_Driver/Inc \
+          -I$(STM32CUBE)/Drivers/CMSIS/Device/ST/STM32U5xx/Include \
+          -I$(STM32CUBE)/Drivers/STM32U5xx_HAL_Driver/Inc \
+          -I$(STM32CUBE)/Drivers/CMSIS/Include \
+          -Ihal \
+          -DSTM32U585xx
+    endif
   endif
 
   ## Cortex-M CPU

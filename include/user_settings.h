@@ -28,6 +28,10 @@
 
 #include <target.h>
 
+#ifdef WOLFSSL_STM32_PKA
+#include <stdint.h>
+#endif
+
 /* System */
 #define WOLFSSL_GENERAL_ALIGNMENT 4
 #define SINGLE_THREADED
