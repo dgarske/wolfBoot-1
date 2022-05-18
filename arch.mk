@@ -366,6 +366,15 @@ ifeq ($(TARGET),x86_64_efi)
   LD_END_GROUP = -lgnuefi -lefi
   LD = ld
   UPDATE_OBJS:=src/update_ram.o
+  USE_GCC=0
+endif
+
+ifeq ($(TARGET),x86_64_bare)
+  USE_GCC_HEADLESS=0
+  CFLAGS += -DPLATFORM_X86_64_BARE
+  LD = ld
+  UPDATE_OBJS:=src/update_ram.o
+  USE_GCC=0
 endif
 
 BOOT_IMG?=test-app/image.bin
