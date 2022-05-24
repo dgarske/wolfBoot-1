@@ -1,0 +1,88 @@
+
+Found the following 3 Firmware Volumes in FSP binary:
+FV0:
+  GUID   : 1B5C27FE-F01C-4FBC-AEAE-341B2E992A17
+  Offset : 0x00000000
+  Length : 0x00015000
+FV1:
+  GUID   : F32DB7DF-C5BC-423C-9416-08F1FA26A282
+  Offset : 0x00015000
+  Length : 0x00022000
+FV2:
+  GUID   : 52F1AFB6-78A6-448F-8274-F370549AC5D0
+  Offset : 0x00037000
+  Length : 0x00003000
+
+
+FSP_S contains FV0
+<FSP_INFORMATION_HEADER>:
+  Signature                  = 0x48505346 ('FSPH')
+  HeaderLength               = 0x0000004C
+  Reserved1                  = 0x0000
+  SpecVersion                = 0x20
+  HeaderRevision             = 0x03
+  ImageRevision              = 0x00001000
+  ImageId                    = 0x245053464D455124 ('$QEMFSP$')
+  ImageSize                  = 0x00015000
+  ImageBase                  = 0xFFFC8000
+  ImageAttribute             = 0x0001
+  ComponentAttribute         = 0x3003
+  CfgRegionOffset            = 0x000001F4
+  CfgRegionSize              = 0x00000080
+  Reserved2                  = 0x00000000
+  TempRamInitEntryOffset     = 0x00000000
+  Reserved3                  = 0x00000000
+  NotifyPhaseEntryOffset     = 0x00000478
+  FspMemoryInitEntryOffset   = 0x00000000
+  TempRamExitEntryOffset     = 0x00000000
+  FspSiliconInitEntryOffset  = 0x00000482
+  FspMultiPhaseSiInitEntryOffset = 0x00000000
+
+FSP_M contains FV1
+<FSP_INFORMATION_HEADER>:
+  Signature                  = 0x48505346 ('FSPH')
+  HeaderLength               = 0x0000004C
+  Reserved1                  = 0x0000
+  SpecVersion                = 0x20
+  HeaderRevision             = 0x03
+  ImageRevision              = 0x00001000
+  ImageId                    = 0x245053464D455124 ('$QEMFSP$')
+  ImageSize                  = 0x00022000
+  ImageBase                  = 0xFFFDD000
+  ImageAttribute             = 0x0001
+  ComponentAttribute         = 0x2003
+  CfgRegionOffset            = 0x000001F4
+  CfgRegionSize              = 0x00000080
+  Reserved2                  = 0x00000000
+  TempRamInitEntryOffset     = 0x00000000
+  Reserved3                  = 0x00000000
+  NotifyPhaseEntryOffset     = 0x00000000
+  FspMemoryInitEntryOffset   = 0x00000858
+  TempRamExitEntryOffset     = 0x00000862
+  FspSiliconInitEntryOffset  = 0x00000000
+  FspMultiPhaseSiInitEntryOffset = 0x00000000
+
+FSP_T contains FV2
+<FSP_INFORMATION_HEADER>:
+  Signature                  = 0x48505346 ('FSPH')
+  HeaderLength               = 0x0000004C
+  Reserved1                  = 0x0000
+  SpecVersion                = 0x20
+  HeaderRevision             = 0x03
+  ImageRevision              = 0x00001000
+  ImageId                    = 0x245053464D455124 ('$QEMFSP$')
+  ImageSize                  = 0x00003000
+  ImageBase                  = 0xFFFFF000
+  ImageAttribute             = 0x0001
+  ComponentAttribute         = 0x1003
+  CfgRegionOffset            = 0x000001F4
+  CfgRegionSize              = 0x00000092
+  Reserved2                  = 0x00000000
+  TempRamInitEntryOffset     = 0x00000593
+  Reserved3                  = 0x00000000
+  NotifyPhaseEntryOffset     = 0x00000000
+  FspMemoryInitEntryOffset   = 0x00000000
+  TempRamExitEntryOffset     = 0x00000000
+  FspSiliconInitEntryOffset  = 0x00000000
+  FspMultiPhaseSiInitEntryOffset = 0x00000000
+
