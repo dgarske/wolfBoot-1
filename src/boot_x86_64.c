@@ -24,8 +24,9 @@
 #include "loader.h"
 #include "wolfboot/wolfboot.h"
 
-#ifdef PLATFORM_X86_64_EFI
+#if defined(PLATFORM_X86_64_EFI) || defined(PLATFORM_X86_64_BARE)
 
+#ifdef PLATFORM_X86_64_EFI
 #include <efi/efi.h>
 #include <efi/efilib.h>
 
@@ -35,6 +36,7 @@ static volatile unsigned int cpu_id;
 extern unsigned int *END_STACK;
 
 extern void RAMFUNCTION x86_64_efi_do_boot(uint8_t *kernel);
+#endif
 
 #ifdef MMU
 void RAMFUNCTION do_boot(const uint32_t *app_offset, const uint32_t* dts_offset)
@@ -42,7 +44,12 @@ void RAMFUNCTION do_boot(const uint32_t *app_offset, const uint32_t* dts_offset)
 void RAMFUNCTION do_boot(const uint32_t *app_offset)
 #endif
 {
+#ifdef PLATFORM_X86_64_EFI
     x86_64_efi_do_boot((uint8_t *)app_offset);
+#else
+    /* TODO: Do boot at app_offset */
+    (void)app_offset;
+#endif
 }
 
-#endif /* PLATFORM_X86_64_EFI */
+#endif

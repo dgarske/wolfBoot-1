@@ -22,8 +22,10 @@ WOLFCRYPT_OBJS+=./lib/wolfssl/wolfcrypt/src/sha256.o
 
 ifeq ($(ARCH),x86_64)
   OBJS+=src/boot_x86_64.o
+  ifeq ($(TARGET),x86_64_efi)
   ifeq ($(DEBUG),1)
     CFLAGS+=-DWOLFBOOT_DEBUG_EFI=1
+  endif
   endif
 endif
 
@@ -371,7 +373,11 @@ endif
 
 ifeq ($(TARGET),x86_64_bare)
   USE_GCC_HEADLESS=0
-  CFLAGS += -DPLATFORM_X86_64_BARE
+  CFLAGS += -DPLATFORM_X86_64_BARE -DWOLFBOOT_DUALBOOT
+  CFLAGS += -fpic -ffreestanding -fno-stack-protector -fno-stack-check \
+            -fshort-wchar
+  LD_START_GROUP = 
+  LD_END_GROUP = 
   LD = ld
   UPDATE_OBJS:=src/update_ram.o
   USE_GCC=0

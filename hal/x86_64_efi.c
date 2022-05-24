@@ -76,7 +76,7 @@ void* hal_get_primary_address(void)
 }
 void* hal_get_update_address(void)
 {
-  return (void*)update_addr;
+    return (void*)update_addr;
 }
 
 

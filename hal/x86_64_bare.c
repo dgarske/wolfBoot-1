@@ -56,6 +56,9 @@ void hal_prepare_boot(void)
 
 int RAMFUNCTION hal_flash_write(uint32_t address, const uint8_t *data, int len)
 {
+    (void)address;
+    (void)data;
+    (void)len;
     return 0;
 }
 
@@ -69,7 +72,20 @@ void RAMFUNCTION hal_flash_lock(void)
 
 int RAMFUNCTION hal_flash_erase(uint32_t address, int len)
 {
+    (void)address;
+    (void)len;
     return 0;
+}
+
+void* hal_get_primary_address(void)
+{
+    /* TODO: Get kernel_addr */
+    return (void*)0;
+}
+void* hal_get_update_address(void)
+{
+    /* TODO: Get update_addr */
+    return (void*)0;
 }
 
 #endif /* PLATFORM_X86_64_BARE */

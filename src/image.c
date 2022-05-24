@@ -747,7 +747,7 @@ int wolfBoot_open_image_address(struct wolfBoot_image* img, uint8_t* image)
         return -1;
     img->fw_size = wolfBoot_image_size(image);
 #ifdef WOLFBOOT_FIXED_PARTITIONS
-    if (img->fw_size > (WOLFBOOT_PARTITION_SIZE - IMAGE_HEADER_SIZE)) {
+    if (img->fw_size > (uint32_t)(WOLFBOOT_PARTITION_SIZE - IMAGE_HEADER_SIZE)) {
         img->fw_size = 0;
         return -1;
     }

@@ -73,7 +73,7 @@ void RAMFUNCTION wolfBoot_start(void)
         wolfBoot_panic();
 
     wolfBoot_printf("Active Part %x\n", load_address);
-    #ifdef WOLFBOOT_FIXED_PARTITIONS
+#ifdef WOLFBOOT_FIXED_PARTITIONS
     /* Check current status for failure (image still in TESTING), and fall-back
      * if an alternative is available
      */
@@ -83,7 +83,7 @@ void RAMFUNCTION wolfBoot_start(void)
     {
         active ^= 1; /* switch to other partition if available */
     }
-    #endif
+#endif
     wolfBoot_printf("Active Part %d %x\n", active, load_address);
 
     for (;;) {
@@ -169,10 +169,7 @@ void RAMFUNCTION wolfBoot_start(void)
     wolfBoot_printf("Booting at %08lx\n", load_address);
     hal_prepare_boot();
 
-#ifdef PLATFORM_X86_64_EFI
-    extern void x86_64_efi_do_boot(uint8_t *);
-    x86_64_efi_do_boot((uint8_t*)load_address);
-#elif defined MMU
+#if defined MMU
     do_boot((uint32_t*)load_address, (uint32_t*)dts_address);
 #else
     do_boot((uint32_t*)load_address);
