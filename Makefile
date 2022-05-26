@@ -225,6 +225,10 @@ check_config:
 	@echo "\t[AS-$(ARCH)] $@"
 	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $(OUTPUT_FLAG) $@ $^
 
+%.o:%.nasm
+	@echo "\t[AS-$(ARCH)] $@"
+	$(Q)$(NASM) $(ASFLAGS) -f macho64 $(OUTPUT_FLAG) $@ $^
+
 FORCE:
 
 .PHONY: FORCE clean keytool_check

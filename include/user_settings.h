@@ -28,6 +28,10 @@
 
 #include <target.h>
 
+#undef memcpy
+#undef memmove
+#undef memset
+
 /* System */
 #define WOLFSSL_GENERAL_ALIGNMENT 4
 #define SINGLE_THREADED

@@ -51,8 +51,8 @@ int isalpha(int c)
     return (isupper(c) || islower(c));
 }
 
-#if !defined(__IAR_SYSTEMS_ICC__) && \
-    !defined(PLATFORM_X86_64_EFI) && !defined(PLATFORM_X86_64_BARE)
+#if !defined(__IAR_SYSTEMS_ICC__) && !defined(PLATFORM_X86_64_EFI)
+#undef memset
 void *memset(void *s, int c, size_t n)
 {
 	unsigned char *d = (unsigned char *)s;
@@ -63,9 +63,9 @@ void *memset(void *s, int c, size_t n)
 
 	return s;
 }
-#endif /* IAR && !X86_64 */
+#endif /* IAR && !X86_64_EFI */
 
-#ifndef strcat
+#undef strcat
 char *strcat(char *dest, const char *src)
 {
     size_t i = 0;
@@ -78,7 +78,6 @@ char *strcat(char *dest, const char *src)
 
     return dest;
 }
-#endif
 
 int strcmp(const char *s1, const char *s2)
 {
@@ -139,7 +138,7 @@ size_t strlen(const char *s)
     return i;
 }
 
-#ifndef strncat
+#undef strncat
 char *strncat(char *dest, const char *src, size_t n)
 {
     size_t i = 0;
@@ -155,7 +154,6 @@ char *strncat(char *dest, const char *src, size_t n)
 
     return dest;
 }
-#endif
 
 int strncmp(const char *s1, const char *s2, size_t n)
 {
@@ -173,8 +171,8 @@ int strncmp(const char *s1, const char *s2, size_t n)
     return diff;
 }
 
-#if !defined(__IAR_SYSTEMS_ICC__) && \
-    !defined(PLATFORM_X86_64_EFI) && !defined(PLATFORM_X86_64_BARE)
+#if !defined(__IAR_SYSTEMS_ICC__) && !defined(PLATFORM_X86_64_EFI)
+#undef memcpy
 void *memcpy(void *dst, const void *src, size_t n)
 {
     size_t i;
@@ -187,9 +185,9 @@ void *memcpy(void *dst, const void *src, size_t n)
 
     return dst;
 }
-#endif /* IAR && !X86_64 */
+#endif /* IAR && !X86_64_EFI */
 
-#ifndef strncpy
+#undef strncpy
 char *strncpy(char *dst, const char *src, size_t n)
 {
     size_t i;
@@ -202,9 +200,8 @@ char *strncpy(char *dst, const char *src, size_t n)
 
     return dst;
 }
-#endif
 
-#ifndef strcpy
+#undef strcpy
 char *strcpy(char *dst, const char *src)
 {
    size_t i = 0;
@@ -218,7 +215,6 @@ char *strcpy(char *dst, const char *src)
 
     return dst;
 }
-#endif
 
 int memcmp(const void *_s1, const void *_s2, size_t n)
 {
@@ -236,8 +232,7 @@ int memcmp(const void *_s1, const void *_s2, size_t n)
 	return diff;
 }
 
-#if !defined(__IAR_SYSTEMS_ICC__) && \
-    !defined(PLATFORM_X86_64_EFI) && !defined(PLATFORM_X86_64_BARE)
+#if !defined(__IAR_SYSTEMS_ICC__) && !defined(PLATFORM_X86_64_EFI) && !defined(PLATFORM_X86_64_BARE)
 void *memmove(void *dst, const void *src, size_t n)
 {
     int i;
@@ -254,4 +249,4 @@ void *memmove(void *dst, const void *src, size_t n)
         return memcpy(dst, src, n);
     }
 }
-#endif /* IAR && !X86_64 */
+#endif /* IAR && !X86_64_EFT */

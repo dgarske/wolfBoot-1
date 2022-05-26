@@ -22,7 +22,6 @@ WOLFCRYPT_OBJS+=./lib/wolfssl/wolfcrypt/src/sha256.o
 
 ifeq ($(ARCH),x86_64)
   OBJS+=src/boot_x86_64.o src/boot_x86_64_start.o
-  ASFLAGS+=-x assembler-with-cpp
   ifeq ($(TARGET),x86_64_efi)
   ifeq ($(DEBUG),1)
     CFLAGS+=-DWOLFBOOT_DEBUG_EFI=1
@@ -349,6 +348,7 @@ ifeq ($(USE_GCC),1)
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)gcc
   AS=$(CROSS_COMPILE)gcc
+  NASM=$(CROSS_COMPILE)nasm
   OBJCOPY=$(CROSS_COMPILE)objcopy
   SIZE=$(CROSS_COMPILE)size
   OUTPUT_FLAG=-o
@@ -376,7 +376,8 @@ ifeq ($(TARGET),x86_64_bare)
   USE_GCC_HEADLESS=0
   CFLAGS += -DPLATFORM_X86_64_BARE -DWOLFBOOT_DUALBOOT
   CFLAGS += -fpic -ffreestanding -fno-stack-protector -fno-stack-check \
-            -fshort-wchar
+            -fshort-wchar -fno-builtin-memcpy -fno-builtin-memset -fno-builtin-memmove
+  LDFLAGS = -L/usr/lib
   LD_START_GROUP = 
   LD_END_GROUP = 
   LD = ld
