@@ -214,14 +214,20 @@ static void RAMFUNCTION set_partition_magic(uint8_t part)
 #elif !defined(WOLFBOOT_FIXED_PARTITIONS)
 static uint8_t* RAMFUNCTION get_trailer_at(uint8_t part, uint32_t at)
 {
+    (void)part;
+    (void)at;
     return 0;
 }
 static void RAMFUNCTION set_trailer_at(uint8_t part, uint32_t at, uint8_t val)
 {
+    (void)part;
+    (void)at;
+    (void)val;
     return;
 }
 static void RAMFUNCTION set_partition_magic(uint8_t part)
 {
+    (void)part;
     return;
 }
 

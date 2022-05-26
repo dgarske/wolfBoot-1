@@ -13,6 +13,7 @@ CFLAGS:=-D"__WOLFBOOT"
 CFLAGS+=-Werror -Wextra
 LSCRIPT:=config/target.ld
 LDFLAGS:=
+ASFLAGS:=
 LD_START_GROUP:=-Wl,--start-group
 LD_END_GROUP:=-Wl,--end-group
 
@@ -69,7 +70,6 @@ ifeq ($(TARGET),library)
 	MAIN_TARGET:=test-lib
 endif
 
-ASFLAGS:=$(CFLAGS)
 BOOTLOADER_PARTITION_SIZE?=$$(( $(WOLFBOOT_PARTITION_BOOT_ADDRESS) - $(ARCH_FLASH_OFFSET)))
 
 all: $(MAIN_TARGET)
@@ -223,7 +223,7 @@ check_config:
 
 %.o:%.S
 	@echo "\t[AS-$(ARCH)] $@"
-	$(Q)$(CC) $(CFLAGS) -c $(OUTPUT_FLAG) $@ $^
+	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) -c $(OUTPUT_FLAG) $@ $^
 
 FORCE:
 

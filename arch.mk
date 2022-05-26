@@ -22,6 +22,7 @@ WOLFCRYPT_OBJS+=./lib/wolfssl/wolfcrypt/src/sha256.o
 
 ifeq ($(ARCH),x86_64)
   OBJS+=src/boot_x86_64.o src/boot_x86_64_start.o
+  ASFLAGS+=-x assembler-with-cpp
   ifeq ($(TARGET),x86_64_efi)
   ifeq ($(DEBUG),1)
     CFLAGS+=-DWOLFBOOT_DEBUG_EFI=1

@@ -33,7 +33,7 @@
 .global FspTempRamInit
 FspTempRamInit:
     /* Set FSP-T base in EAX */
-    mov %eax, $(FSPT_BASE)
+    movd %eax, (FSPT_BASE)
 
     /* Find the FSP info header */
     add eax, dword [eax + 094h + FSP_HEADER_TEMPRAMINIT_OFFSET]
