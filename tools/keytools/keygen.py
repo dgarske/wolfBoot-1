@@ -172,13 +172,18 @@ parser.add_argument('--rsa4096', dest='rsa4096', action='store_true')
 parser.add_argument('--force', dest='force', action='store_true')
 parser.add_argument('-i', dest='pubfile', nargs='+', action='extend')
 parser.add_argument('-g', dest='keyfile', nargs='+', action='extend')
+parser.add_argument('-keystoreDir', dest='storeDir', nargs='+', action='extend')
 
 
 args=parser.parse_args()
 
 #sys.exit(0) #test
 
-pubkey_cfile = "src/keystore.c"
+if (type(args.storeDir) == list):
+    pubkey_cfile = "".join(args.storeDir)+"/keystore.c"
+else:
+    pubkey_cfile = "src/keystore.c"
+    
 keystore_imgfile = "keystore.der"
 key_files = args.keyfile
 pubkey_files = args.pubfile

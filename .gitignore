@@ -114,3 +114,7 @@ IDE/IAR/Release
 
 # Simulated Flash files
 *.dd
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
