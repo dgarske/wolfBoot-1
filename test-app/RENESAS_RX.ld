@@ -1,5 +1,5 @@
 OUTPUT_ARCH(rx)
-ENTRY(_start)
+ENTRY(main)
 
 MEMORY
 {
