@@ -49,8 +49,14 @@ Use IDE to build and load wolfBoot bootloader
 
 [uniflash](https://www.ti.com/tool/UNIFLASH#downloads) can be used to flash the binary from command line.
 
+Windows:
 ```
 c:\ti\ccs1031\ccs\ccs_base\scripting\examples\uniflash\cmdLine\uniflash.bat -ccxml "flashHercules.ccxml" -programBin "factory.bin" 0
+```
+
+Mac OS:
+```
+/Applications/ti/ccs1250/ccs/ccs_base/scripting/examples/uniflash/cmdLine/uniflash.sh -ccxml "flashHercules.ccxml" -programBin "factory.bin" 0
 ```
 
 ```

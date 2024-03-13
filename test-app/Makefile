@@ -36,6 +36,27 @@ endif
 
 ifeq ($(TARGET),ti_hercules)
   APP_OBJS:=app_$(TARGET).o ../test-app/libwolfboot.o
+  APP_OBJS+=./HL_epc.o
+	APP_OBJS+=./HL_errata.o
+	APP_OBJS+=./HL_errata_SSWF021_45.o
+	APP_OBJS+=./HL_esm.o
+	APP_OBJS+=./HL_nmpu.o
+  APP_OBJS+=./HL_gio.o
+	APP_OBJS+=./HL_notification.o
+	APP_OBJS+=./HL_pinmux.o
+	APP_OBJS+=./HL_sci.o
+	APP_OBJS+=./HL_sys_core.o
+	APP_OBJS+=./HL_sys_dma.o
+	APP_OBJS+=./HL_sys_intvecs.o
+	APP_OBJS+=./HL_sys_mpu.o
+	APP_OBJS+=./HL_sys_pcr.o
+	APP_OBJS+=./HL_sys_phantom.o
+	APP_OBJS+=./HL_sys_pmm.o
+	APP_OBJS+=./HL_sys_pmu.o
+	APP_OBJS+=./HL_sys_startup.o
+	APP_OBJS+=./HL_sys_vim.o
+	APP_OBJS+=./HL_system.o
+  APP_OBJS+=./HL_sys_link.cmd
   CFLAGS+=-I"../include"
 else
   CFLAGS+=-g -ggdb -Wall -Wstack-usage=1024 -ffreestanding -Wno-unused -DPLATFORM_$(TARGET) -I../include -nostartfiles
@@ -350,7 +371,7 @@ image.bin: image.elf
 
 image.elf: $(APP_OBJS) $(LSCRIPT)
 	@echo "\t[LD] $@"
-	$(Q)$(LD) $(LDFLAGS) $(APP_OBJS) $(OUTPUT_FLAG) $@
+	$(LD) -mv7R5 --code_state=32 --float_support=VFPv3D16 -g --diag_warning=225 --diag_wrap=off --display_error_number --enum_type=packed --abi=eabi -z -m"image.map" --heap_size=0 --stack_size=0x800 -i"/Applications/ti/ccs1250/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"/Applications/ti/ccs1250/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="run_in_wolfboot_linkInfo.xml" --rom_model --be32 $(APP_OBJS) $(OUTPUT_FLAG) $@ $(LD_END_GROUP)
 
 
 standalone: image.bin
@@ -366,6 +387,10 @@ delta-extra-data: image.bin
 	$(Q)$(CC) $(CFLAGS) -c $(OUTPUT_FLAG) $@ $^
 
 %.o:%.S
+	@echo "\t[AS-$(ARCH)] $@"
+	$(Q)$(CC) $(CFLAGS) -c $(OUTPUT_FLAG) $@ $^
+
+%.o:%.asm
 	@echo "\t[AS-$(ARCH)] $@"
 	$(Q)$(CC) $(CFLAGS) -c $(OUTPUT_FLAG) $@ $^
 
