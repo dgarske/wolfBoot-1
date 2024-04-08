@@ -394,37 +394,12 @@ void hal_clk_init(void)
     PROTECT_ON(); /* write protect on */
 }
 
-void hal_init(void)
+void hal_rx_init(void)
 {
     hal_clk_init();
 #ifdef DEBUG_UART
     uart_init();
     uart_write("wolfBoot HAL Init\n", 18);
 #endif
-    return;
-}
-int hal_flash_write(uint32_t address, const uint8_t *data, int len)
-{
-    (void)address;
-    (void)data;
-    (void)len;
-    return 0;
-}
-int hal_flash_erase(uint32_t address, int len)
-{
-    (void)address;
-    (void)len;
-    return 0;
-}
-void hal_flash_unlock(void)
-{
-    return;
-}
-void hal_flash_lock(void)
-{
-    return;
-}
-void hal_prepare_boot(void)
-{
     return;
 }

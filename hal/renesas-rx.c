@@ -33,6 +33,8 @@
 #include "r_flash_rx_if.h"
 #include "r_flash_rx.h"
 
+extern void hal_rx_init(void);
+
 #if defined(WOLFBOOT_RENESAS_TSIP)  && \
     !defined(WOLFBOOT_RENESAS_APP)
 #    include "wolfssl/wolfcrypt/wc_port.h"
@@ -58,6 +60,8 @@ void hal_init(void)
     int tsip_key_type = -1;
     struct rsa2048_pub *encrypted_user_key_data;
 #endif
+
+    hal_rx_init();
 
     if(R_FLASH_Open() != FLASH_SUCCESS)
         hal_panic();

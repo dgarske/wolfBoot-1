@@ -261,9 +261,27 @@ endif
 ## Renesas RX
 ifeq ($(ARCH),RENESAS_RX)
   RX_GCC_PATH?=~/toolchains/gcc_8.3.0.202311_rx_elf
+  RX_DRIVER_PATH?=./lib/r_flash_rx_v5.11
+  BSP_DRIVER_PATH?=./lib/r_bsp_v7.42
+
   CROSS_COMPILE=$(RX_GCC_PATH)/bin/rx-elf-
 
   OBJS+=src/boot_renesas.o src/boot_renesas_start.o
+  OBJS+=hal/renesas-rx.o
+
+  OBJS+=$(RX_DRIVER_PATH)/r_flash_rx/src/r_flash_rx.o \
+        $(RX_DRIVER_PATH)/r_flash_rx/src/r_flash_group.o \
+        $(RX_DRIVER_PATH)/r_flash_rx/src/r_flash_fcu.o \
+        $(RX_DRIVER_PATH)/r_flash_rx/src/flash_type_4/r_flash_type4.o \
+        $(BSP_DRIVER_PATH)/r_bsp/mcu/all/r_rx_intrinsic_functions.o \
+        $(BSP_DRIVER_PATH)/r_bsp/mcu/all/r_bsp_cpu.o
+
+  CFLAGS+=-Ihal \
+          -I$(BSP_DRIVER_PATH)/r_bsp \
+          -I$(RX_DRIVER_PATH)/r_flash_rx \
+          -I$(RX_DRIVER_PATH)/r_flash_rx/src \
+          -I$(RX_DRIVER_PATH)/r_flash_rx/src/flash_type_4 \
+          -I$(RX_DRIVER_PATH)/r_config
 
   ifeq ($(SPMATH),1)
     MATH_OBJS += ./lib/wolfssl/wolfcrypt/src/sp_c32.o
