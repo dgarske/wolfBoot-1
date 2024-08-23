@@ -948,7 +948,7 @@ int RAMFUNCTION ext_flash_write(uintptr_t address, const uint8_t *data, int len)
 {
     int ret = 0;
     uint8_t cmd[8]; /* size multiple of uint32_t */
-    uint32_t xferSz, page, pages, idx = 0;
+    uint32_t xferSz, page, pages, idx;
     uintptr_t addr;
 
     /* write by page */
@@ -968,6 +968,7 @@ int RAMFUNCTION ext_flash_write(uintptr_t address, const uint8_t *data, int len)
 
             /* ------ Write Flash (page at a time) ------ */
             memset(cmd, 0, sizeof(cmd));
+            idx = 0;
             cmd[idx++] = PAGE_PROG_CMD;
         #if GQPI_USE_4BYTE_ADDR == 1
             cmd[idx++] = ((addr >> 24) & 0xFF);
@@ -988,6 +989,7 @@ int RAMFUNCTION ext_flash_write(uintptr_t address, const uint8_t *data, int len)
             }
             qspi_write_disable(&mDev);
         }
+        len -= xferSz;
     }
 
     return ret;
@@ -1101,7 +1103,7 @@ static int test_ext_flash(QspiDev_t* dev)
 {
     int ret;
     uint32_t i;
-    uint8_t pageData[FLASH_PAGE_SIZE];
+    uint8_t pageData[FLASH_PAGE_SIZE*4];
 
 #ifndef TEST_FLASH_READONLY
     /* Erase sector */
