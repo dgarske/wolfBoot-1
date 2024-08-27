@@ -948,7 +948,7 @@ int RAMFUNCTION ext_flash_write(uintptr_t address, const uint8_t *data, int len)
 {
     int ret = 0;
     uint8_t cmd[8]; /* size multiple of uint32_t */
-    uint32_t xferSz, page, pages, idx;
+    uint32_t xferSz = 0, page, pages, idx;
     uintptr_t addr;
 
     /* write by page */
