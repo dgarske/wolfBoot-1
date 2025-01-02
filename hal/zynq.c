@@ -82,6 +82,7 @@ static int test_ext_flash(QspiDev_t* dev);
 
 /* asm function */
 extern void flush_dcache_range(unsigned long start, unsigned long stop);
+extern unsigned int current_el(void);
 
 #ifdef DEBUG_UART
 void uart_init(void)
@@ -130,6 +131,137 @@ void uart_write(const char* buf, uint32_t sz)
     while (!(ZYNQMP_UART_SR & ZYNQMP_UART_SR_TXEMPTY));
 }
 #endif /* DEBUG_UART */
+
+/*
+ * This struct defines the way the registers are stored
+ * on the stack during an exception.
+ */
+struct pt_regs {
+    unsigned long elr;
+    unsigned long regs[31];
+};
+
+/*
+ * void smc_call(arg0, arg1...arg7)
+ *
+ * issue the secure monitor call
+ *
+ * x0~x7: input arguments
+ * x0~x3: output arguments
+ */
+static void smc_call(struct pt_regs *args)
+{
+    asm volatile(
+        "ldr x0, %0\n"
+        "ldr x1, %1\n"
+        "ldr x2, %2\n"
+        "ldr x3, %3\n"
+        "ldr x4, %4\n"
+        "ldr x5, %5\n"
+        "ldr x6, %6\n"
+        "smc    #0\n"
+        "str x0, %0\n"
+        "str x1, %1\n"
+        "str x2, %2\n"
+        "str x3, %3\n"
+        : "+m" (args->regs[0]), "+m" (args->regs[1]),
+          "+m" (args->regs[2]), "+m" (args->regs[3])
+        : "m" (args->regs[4]), "m" (args->regs[5]),
+          "m" (args->regs[6])
+        : "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
+          "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
+          "x16", "x17");
+}
+
+#define PM_SIP_SVC      0xc2000000
+#define PM_MMIO_WRITE   0x13 /* 19 */
+
+static int xilinx_pm_request(uint32_t api_id,
+    uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3,
+    uint32_t *ret_payload)
+{
+    struct pt_regs regs;
+
+    regs.regs[0] = PM_SIP_SVC | api_id;
+    regs.regs[1] = ((uint64_t)arg1 << 32) | arg0;
+    regs.regs[2] = ((uint64_t)arg3 << 32) | arg2;
+
+    smc_call(&regs);
+
+    if (ret_payload) {
+        ret_payload[0] = (uint32_t)(regs.regs[0]);
+        ret_payload[1] = (uint32_t)(regs.regs[0] >> 32);
+        ret_payload[2] = (uint32_t)(regs.regs[1]);
+        ret_payload[3] = (uint32_t)(regs.regs[1] >> 32);
+        ret_payload[4] = (uint32_t)(regs.regs[2]);
+    }
+    return (ret_payload) ? ret_payload[0] : 0;
+}
+
+
+/* CSU PUF */
+#define PUF_REG_TIMEOUT 500000
+int csu_puf_register(uint32_t* syndrome, uint32_t* syndromeSz, uint32_t* chash,
+    uint32_t* aux)
+{
+    int ret;
+    uint32_t puf_status, timeout = 0, idx = 0;
+
+#if defined(DEBUG_CSU) && DEBUG_CSU >= 1
+    wolfBoot_printf("CSU Puf Register\n");
+#endif
+
+    CSU_PUF_CFG0 = CSU_PUF_CFG0_INIT;
+    CSU_PUF_CFG1 = CSU_PUF_CFG1_INIT;
+    CSU_PUF_SHUTTER = CSU_PUF_SHUTTER_INIT;
+    CSU_PUF_CMD = CSU_PUF_CMD_REGISTRATION;
+    while (1) {
+        /* Wait for PUF status done */
+        while (((puf_status = CSU_PUF_STATUS) & CSU_PUF_STATUS_SYN_WRD_RDY_MASK) == 0
+            && ++timeout < PUF_REG_TIMEOUT);
+        if (timeout == PUF_REG_TIMEOUT) {
+            ret = -1; /* timeout */
+            break;
+        }
+        if ((idx * 4) > *syndromeSz) {
+            ret = -2; /* overrun */
+            break;
+        }
+        if (puf_status & CSU_PUF_STATUS_KEY_RDY_MASK) {
+            *chash = CSU_PUF_WORD;
+            *aux = (puf_status & CSU_PUF_STATUS_AUX_MASK) >> 4;
+            ret = 0;
+            break;
+        }
+        else {
+            /* Read in the syndrome */
+            syndrome[idx++] = CSU_PUF_WORD;
+        }
+    }
+    *syndromeSz = idx * 4;
+
+#if defined(DEBUG_CSU) && DEBUG_CSU >= 1
+    wolfBoot_printf("Ret %d, SyndromeSz %d, CHASH 0x%08x, AUX 0x%08x\n",
+        ret, *syndromeSz, *chash, *aux);
+    #if DEBUG_CSU >= 2
+    for (idx=0; idx<*syndromeSz/4; idx++) {
+        wolfBoot_printf("%02x", syndrome[idx]);
+    }
+    #endif
+#endif
+
+    return ret;
+}
+
+#define CSU_PUF_SYNDROME_WORDS 386
+int csu_test(void)
+{
+    uint32_t syndrome[CSU_PUF_SYNDROME_WORDS];
+    uint32_t syndromeSz = (uint32_t)sizeof(syndrome);
+    uint32_t chash=0, aux=0;
+    return csu_puf_register(syndrome, &syndromeSz, &chash, &aux);
+}
+
 
 
 #ifdef USE_XQSPIPSU
@@ -197,7 +329,7 @@ static int qspi_transfer(QspiDev_t* pDev,
     /* Dummy */
     if (dummySz > 0) {
         memset(&msgs[msgCnt], 0, sizeof(XQspiPsu_Msg));
-        msgs[msgCnt].ByteCount = dummySz;
+        msgs[msgCnt].ByteCount = dummySz; /* not used */
         msgs[msgCnt].BusWidth = busWidth;
         msgCnt++;
     }
@@ -406,8 +538,11 @@ static int qspi_cs(QspiDev_t* pDev, int csAssert)
     reg_genfifo |= GQSPI_GEN_FIFO_MODE_SPI;
     if (csAssert) {
         reg_genfifo |= (pDev->cs & GQSPI_GEN_FIFO_CS_MASK);
+        reg_genfifo |= GQSPI_GEN_FIFO_IMM(GQSPI_CS_ASSERT_CLOCKS);
     }
-    reg_genfifo |= GQSPI_GEN_FIFO_IMM(GQSPI_CS_ASSERT_CLOCKS);
+    else {
+        reg_genfifo |= GQSPI_GEN_FIFO_IMM(GQSPI_CS_DEASSERT_CLOCKS);
+    }
     return qspi_gen_fifo_write(reg_genfifo);
 }
 
@@ -418,11 +553,11 @@ static uint32_t qspi_calc_exp(uint32_t xferSz, uint32_t* reg_genfifo)
     if (xferSz > GQSPI_GEN_FIFO_IMM_MASK) {
         /* Use exponent mode (DMA max is 2^28) */
         for (expval=28; expval>=8; expval--) {
-            /* find highest bit set */
-            if (xferSz & (1 << expval)) {
+            /* find highest value */
+            if (xferSz >= (1UL << expval)) {
                 *reg_genfifo |= GQSPI_GEN_FIFO_EXP_MASK;
                 *reg_genfifo |= GQSPI_GEN_FIFO_IMM(expval); /* IMM=exponent */
-                xferSz = (1 << expval);
+                xferSz = (1UL << expval);
                 break;
             }
         }
@@ -547,6 +682,14 @@ static int qspi_transfer(QspiDev_t* pDev,
         flush_dcache_range((unsigned long)dmarxptr,
             (unsigned long)dmarxptr + xferSz);
     #endif
+
+#if defined(DEBUG_ZYNQ) && DEBUG_ZYNQ >= 2
+    #ifndef GQSPI_MODE_IO
+        wolfBoot_printf("DMA: ptr %p, xferSz %d\n", dmarxptr, xferSz);
+    #else
+        wolfBoot_printf("IO: ptr %p, xferSz %d\n", rxData, xferSz);
+    #endif
+#endif
 
         /* Submit general FIFO operation */
         ret = qspi_gen_fifo_write(reg_genfifo);
@@ -801,7 +944,7 @@ static int qspi_exit_4byte_addr(QspiDev_t* dev)
 #endif
 
 /* QSPI functions */
-void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
+void qspi_init(void)
 {
     int ret;
     uint32_t reg_cfg, reg_isr;
@@ -813,9 +956,6 @@ void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
 #ifdef USE_XQSPIPSU
     XQspiPsu_Config *QspiConfig;
 #endif
-
-    (void)cpu_clock;
-    (void)flash_freq;
 
     memset(&mDev, 0, sizeof(mDev));
 
@@ -865,6 +1005,7 @@ void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
     GQSPI_ISR = (reg_isr | GQSPI_ISR_WR_TO_CLR_MASK); /* Clear poll timeout counter interrupt */
     reg_cfg = GQSPIDMA_ISR;
     GQSPIDMA_ISR = reg_cfg; /* clear all active interrupts */
+    GQSPI_IER = GQSPI_IXR_GEN_FIFO_EMPTY;
     GQSPI_IDR = GQSPI_IXR_ALL_MASK; /* disable interrupts */
     GQSPIDMA_IDR = GQSPIDMA_ISR_ALL_MASK;
 
@@ -873,7 +1014,7 @@ void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
     /* Initialize clock divisor, write protect hold and start mode */
 #ifdef GQSPI_MODE_IO
     reg_cfg  = GQSPI_CFG_MODE_EN_IO; /* Use I/O Transfer Mode */
-    reg_cfg |= GQSPI_CFG_START_GEN_FIFO; /* Auto start GFIFO cmd execution */
+    reg_cfg |= GQSPI_CFG_START_GEN_FIFO; /* Trigger GFIFO commands to start */
 #else
     reg_cfg  = GQSPI_CFG_MODE_EN_DMA; /* Use DMA Transfer Mode */
 #endif
@@ -900,7 +1041,12 @@ void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
      * The generic controller should be in clock loopback mode and the clock
      * tap delay enabled, but the data tap delay disabled. */
     /* For EL2 or lower must use IOCTL_SET_TAPDELAY_BYPASS ARG1=2, ARG2=0 */
+    #if 1
+    reg_cfg = 0;
+    xilinx_pm_request(PM_MMIO_WRITE, IOU_TAPDLY_BYPASS_ADDR, 0x7, reg_cfg, 0, NULL);
+    #else
     IOU_TAPDLY_BYPASS = 0;
+    #endif
     GQSPI_LPBK_DLY_ADJ = GQSPI_LPBK_DLY_ADJ_USE_LPBK;
     GQSPI_DATA_DLY_ADJ = 0;
 #endif
@@ -913,6 +1059,7 @@ void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
     /* Reset DMA */
     GQSPIDMA_CTRL = GQSPIDMA_CTRL_DEF;
     GQSPIDMA_CTRL2 = GQSPIDMA_CTRL2_DEF;
+    GQSPIDMA_IER = GQSPIDMA_ISR_ALL_MASK;
 
     GQSPI_EN = 1; /* Enable Device */
 #endif /* USE_QNX */
@@ -957,8 +1104,8 @@ void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
     /* Slave Select */
     mDev.mode = GQSPI_QSPI_MODE;
 #if GQPI_USE_DUAL_PARALLEL == 1
-    mDev.bus = GQSPI_GEN_FIFO_BUS_BOTH;
-    mDev.cs = GQSPI_GEN_FIFO_CS_BOTH;
+    mDev.bus = GQSPI_GEN_FIFO_BUS_BOTH; /* GQSPI_GEN_FIFO_BUS_LOW or GQSPI_GEN_FIFO_BUS_UP */
+    mDev.cs = GQSPI_GEN_FIFO_CS_BOTH; /* GQSPI_GEN_FIFO_CS_LOWER or GQSPI_GEN_FIFO_CS_UPPER */
     mDev.stripe = GQSPI_GEN_FIFO_STRIPE;
 #endif
 
@@ -974,7 +1121,7 @@ void qspi_init(uint32_t cpu_clock, uint32_t flash_freq)
 #endif
 }
 
-#if 0
+#if 1
 uint64_t hal_timer_ms(void)
 {
     uint64_t val;
@@ -991,20 +1138,17 @@ uint64_t hal_timer_ms(void)
 /* public HAL functions */
 void hal_init(void)
 {
-    uint32_t cpu_freq = 0;
     const char* bootMsg = "\nwolfBoot Secure Boot\n";
 
 #ifdef DEBUG_UART
     uart_init();
 #endif
     wolfBoot_printf(bootMsg);
+    wolfBoot_printf("Current EL: %d\n", current_el());
 
-#if 0
-    /* This is only allowed for EL-3 */
-    asm volatile("msr cntfrq_el0, %0" : : "r" (cpu_freq) : "memory");
-#endif
+    qspi_init();
 
-    qspi_init(cpu_freq, 0);
+    csu_test();
 }
 
 void hal_prepare_boot(void)

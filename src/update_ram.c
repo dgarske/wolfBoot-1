@@ -33,6 +33,8 @@
 #include "elf.h"
 #endif
 
+uint64_t hal_timer_ms(void);
+
 extern void hal_flash_dualbank_swap(void);
 extern int wolfBoot_get_dts_size(void *dts_addr);
 
@@ -78,6 +80,7 @@ int wolfBoot_ramboot(struct wolfBoot_image *img, uint8_t *src, uint8_t *dst)
     /* determine size of partition */
     img_size = wolfBoot_image_size((uint8_t*)dst);
 
+    uint64_t start = hal_timer_ms();
     /* Read the entire image into RAM */
     wolfBoot_printf("Loading image %d bytes from %p to %p\n",
         img_size, src + IMAGE_HEADER_SIZE, dst + IMAGE_HEADER_SIZE);
@@ -91,6 +94,7 @@ int wolfBoot_ramboot(struct wolfBoot_image *img, uint8_t *src, uint8_t *dst)
 #else
     memcpy(dst + IMAGE_HEADER_SIZE, src + IMAGE_HEADER_SIZE, img_size);
 #endif
+    wolfBoot_printf("done %lu ms\n", hal_timer_ms() - start);
 
     /* mark image as no longer external */
     img->not_ext = 1;
@@ -115,6 +119,8 @@ void RAMFUNCTION wolfBoot_start(void)
     uint8_t *dts_addr = NULL;
     uint32_t dts_size = 0;
 #endif
+
+    uint64_t start = hal_timer_ms();
 
     memset(&os_image, 0, sizeof(struct wolfBoot_image));
 
@@ -338,6 +344,7 @@ backup_on_failure:
 #endif /* MMU */
 
     wolfBoot_printf("Booting at %p\n", load_address);
+    wolfBoot_printf("Boot took %lu ms", hal_timer_ms() - start);
 
 #ifdef WOLFBOOT_ENABLE_WOLFHSM_CLIENT
     (void)hal_hsm_disconnect();

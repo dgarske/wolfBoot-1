@@ -358,6 +358,7 @@ static int RsaDecodeSignature(uint8_t** pInput, int inputSz)
 }
 #endif /* !NO_RSA_SIG_ENCODING */
 
+uint64_t hal_timer_ms(void);
 static void wolfBoot_verify_signature_rsa(uint8_t key_slot,
         struct wolfBoot_image *img, uint8_t *sig)
 {
@@ -377,6 +378,9 @@ static void wolfBoot_verify_signature_rsa(uint8_t key_slot,
         return;
     }
 #endif
+
+    uint64_t start = hal_timer_ms();
+    wolfBoot_printf("RSA Verify...");
 
 #if defined(WOLFBOOT_RENESAS_SCEPROTECT) || \
     defined(WOLFBOOT_RENESAS_TSIP) || \
@@ -452,6 +456,8 @@ static void wolfBoot_verify_signature_rsa(uint8_t key_slot,
     if (ret == WOLFBOOT_SHA_DIGEST_SIZE && img && digest_out) {
         RSA_VERIFY_HASH(img, digest_out);
     }
+
+    wolfBoot_printf("done (%lu ms)\n", hal_timer_ms() - start);
 }
 
 #endif /* WOLFBOOT_SIGN_RSA2048 || WOLFBOOT_SIGN_RSA3072 || \
@@ -1004,6 +1010,9 @@ static int image_sha3_384(struct wolfBoot_image *img, uint8_t *hash)
     if (!img)
         return -1;
 
+    uint64_t start = hal_timer_ms();
+    wolfBoot_printf("SHA3-384...");
+
     p = get_img_hdr(img);
     stored_sha_len = get_header(img, HDR_SHA3_384, &stored_sha);
     if (stored_sha_len != WOLFBOOT_SHA_DIGEST_SIZE)
@@ -1014,11 +1023,13 @@ static int image_sha3_384(struct wolfBoot_image *img, uint8_t *hash)
         blksz = WOLFBOOT_SHA_BLOCK_SIZE;
         if (end_sha - p < blksz)
             blksz = end_sha - p;
+        wolfBoot_printf("header %p (%d bytes)\n", p, blksz);
         wc_Sha3_384_Update(&sha3_ctx, p, blksz);
         p += blksz;
     }
+    p = get_sha_block(img, position);
+    wolfBoot_printf("image %p\n", p);
     do {
-        p = get_sha_block(img, position);
         if (p == NULL)
             break;
         blksz = WOLFBOOT_SHA_BLOCK_SIZE;
@@ -1026,8 +1037,11 @@ static int image_sha3_384(struct wolfBoot_image *img, uint8_t *hash)
             blksz = img->fw_size - position;
         wc_Sha3_384_Update(&sha3_ctx, p, blksz);
         position += blksz;
-    } while(position < img->fw_size);
+        p = get_sha_block(img, position);
+    } while (position < img->fw_size);
 
+    wolfBoot_printf(" (%u bytes) (%lu ms)\n",
+        position, hal_timer_ms() - start);
     wc_Sha3_384_Final(&sha3_ctx, hash);
     wc_Sha3_384_Free(&sha3_ctx);
     return 0;

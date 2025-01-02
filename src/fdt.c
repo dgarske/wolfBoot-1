@@ -820,6 +820,7 @@ const char* fit_find_images(void* fdt, const char** pkernel, const char** pflat_
     return conf;
 }
 
+uint64_t hal_timer_ms(void);
 void* fit_load_image(void* fdt, const char* image, int* lenp)
 {
     void *load, *entry, *data = NULL;
@@ -832,9 +833,15 @@ void* fit_load_image(void* fdt, const char* image, int* lenp)
         load = fdt_getprop_address(fdt, off, "load");
         entry = fdt_getprop_address(fdt, off, "entry");
         if (data != NULL && load != NULL && data != load) {
+        #ifdef TARGET_zynq
+            uint64_t start = hal_timer_ms();
+        #endif
             wolfBoot_printf("Loading Image %s: %p -> %p (%d bytes)\n",
                 image, data, load, len);
             memcpy(load, data, len);
+        #ifdef TARGET_zynq
+            wolfBoot_printf("(%lu ms)\n", hal_timer_ms() - start);
+        #endif
 
             /* load should always have entry, but if not use load adress */
             data = (entry != NULL) ? entry : load;
